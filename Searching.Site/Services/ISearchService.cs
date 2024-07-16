@@ -6,6 +6,8 @@ namespace Searching.Site.Services
 {
     public interface ISearchService
     {
+        IEnumerable<IPublishedContent> GetContentSearchResults(string query, string[] docTypeAliases);
+
         IEnumerable<ISearchResult> GetPageOfSearchResults(string searchTerm,
             string category, int pageNumber, out long totalItemCount, string[] docTypeAliases,
             string searchType, int pageSize = 10);

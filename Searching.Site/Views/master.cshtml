@@ -61,15 +61,22 @@
             <div class="modal-content">
                 <div class="modal-header">
 
-                    <div class="form">
+                    <form id="search-form">
+                        <input type="text" name="query" id="search-input">
+                        <button type="submit">Ara</button>
+                    </form>
+
+                    @*<form class="form" id="search-form">
                         <i class="fa fa-search"></i>
-                        <input type="text" class="form-control form-input" placeholder="Search anything...">
+                        <input type="text" name="query" id="search-input" class="form-control form-input" placeholder="Search anything...">
                         <span class="left-pan"><i class="fa fa-microphone"></i></span>
-                    </div>
+                    </form>*@
 
                 </div>
                 <div class="modal-body">
-                    ...
+                    
+                    <div id="SearchResults"></div>
+
                 </div>
                 <div class="modal-footer">
                     <p>1453 kayıt bulundu.</p>
@@ -168,6 +175,43 @@
                     });
                 }
             });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $("#search-form").submit(function (event) {
+                event.preventDefault(); // Formun varsayılan gönderimini engelle
+
+                var query = $("#search-input").val();
+                var category = "news"; // Kategori değerini gerektiği gibi alın
+
+                $.ajax({
+                    url: "/Umbraco/Api/SearchApi/GetSearchResults", // API metodunuzun URL'si
+                    type: "GET",
+                    data: { query: query, category: category, page: 1 }, // İstek parametreleri
+                    success: function (data) {
+                        // Başarılı olursa, arama sonuçlarını işle
+                        displaySearchResults(data);
+                    },
+                    error: function () {
+                        // Hata durumunda bir mesaj göster
+                        $("#SearchResults").html("<p>Bir hata oluştu. Lütfen daha sonra tekrar deneyin.</p>");
+                    }
+                });
+            });
+
+            function displaySearchResults(data) {
+                var resultsHtml = "";
+                if (data.Results.length > 0) {
+                    $.each(data.Results, function (index, result) {
+                        resultsHtml += "<a href='" + result.Url + "'>" + result.Name + "</a><br>";
+                    });
+                } else {
+                    resultsHtml = "<p>Sonuç bulunamadı.</p>";
+                }
+                $("#SearchResults").html(resultsHtml);
+            }
         });
     </script>
 

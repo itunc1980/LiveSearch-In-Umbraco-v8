@@ -43,6 +43,7 @@ namespace Searching.Site.Services
             return items;
         }
 
+
         public IEnumerable<ISearchResult> GetPageOfSearchResults(string searchTerm, 
             string category, int pageNumber, out long totalItemCount, string[] docTypeAliases,
             string searchType, int pageSize = 10)
@@ -106,5 +107,18 @@ namespace Searching.Site.Services
             totalItemCount = 0;
             return Enumerable.Empty<ISearchResult>();
         }
+
+
+        public IEnumerable<IPublishedContent> GetContentSearchResults(string query, string[] docTypeAliases)
+        {
+            var contentService = _umbracoContextAccessor.UmbracoContext.Content;
+
+            // Sadece belirtilen doküman tiplerini sorgula
+            var results = contentService.GetByXPath("//" + string.Join(" | //", docTypeAliases) + "[contains(name(),'" + query + "')]")
+                .Where(x => x.IsVisible()); // Sadece yayında olanları al
+
+            return results;
+        }
+
     }
 }
