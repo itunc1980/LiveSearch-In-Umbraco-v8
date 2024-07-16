@@ -1,0 +1,74 @@
+<div ng-controller="uSyncPublisherLanguageController as pvm">
+
+    <umb-load-indicator ng-if="pvm.loading"></umb-load-indicator>
+
+    <div ng-if="!pvm.loading" class="send-option-flat">
+
+        <div ng-repeat="variant in pvm.variants"
+             class="send-option-check"
+             ng-class="{'muted' : !variant.published}">
+
+            <umb-checkbox input-id="lang_{{variant.id}}"
+                          name="lang_{{variant.id}}"
+                          model="variant._checked"
+                          class="send-option-checkbox"
+                          disabled="!variant.published"></umb-checkbox>
+            <div>
+                <label for="lang_{{variant.id}}">
+                    <span class="send-option-name">{{variant.name}}</span>
+                    <span class="send-option-note">{{variant.id}} {{variant._state}}</span>
+                </label>
+            </div>
+        </div>
+
+        <div ng-if="pvm.hasUnpublished" class="mt4 mb3">
+            <div class="send-option-check">
+                <umb-checkbox name="fulllang"
+                              model="pvm.fulllang"
+                              class="send-option-checkbox"
+                              on-change="pvm.selectAll()">
+                </umb-checkbox>
+                <div>
+                    <label for="fulllang">
+                        <span class="send-option-name">Include unpublished</span>
+                        <span class="send-option-node">This will unpublish languages pages that are not published on {{pvm.server.name}} site</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="alert alert-info usync-no-change-alert" ng-if="pvm.fulllang">
+                <div><i class="icon icon-alert-alt"></i></div>
+                <div><localize key="usyncpublish_partialUnpublished"></localize></div>
+            </div>
+
+
+        </div>
+
+        <div ng-if="!vm.state.valid" class="alert alert-danger usync-no-change-alert">
+            <div><i class="icon icon-alert-alt"></i></div>
+            <div><localize key="usyncpublish_noLangAlert"></localize></div>
+        </div>
+
+        <div ng-if="vm.state.valid && pvm.all === false">
+            <div class="alert alert-warning usync-no-change-alert">
+                <div>
+                    <i class="icon icon-paper-plane-alt"></i>
+                </div>
+                <div>
+                    <localize key="usyncpublish_partialLangWarning"></localize>
+                </div>
+            </div>
+
+            <div class="color-blue flex justify-between items-center"
+                 ng-if="pvm.showChildren && pvm.deleteMissingInitalValue == true">
+                <i class="icon icon-info"></i>
+                <div class="ml3">
+                    Missing items will no be deleted from {{pvm.server.name}}, unless all languages are pushed
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="flex justify-end">
+        <small class="muted">{{ pvm.process.options.cultures}}</small>
+    </div>
+</div>

@@ -1,0 +1,19 @@
+<div>
+    {{model.item.Name}} Failed <br />
+    <em>[{{model.itemType}}]</em>
+
+    <div>
+        <h5>Error Message</h5>
+        <pre>{{model.item.Message}}</pre>
+    </div>
+
+    <div ng-if="model.item.Exception">
+        <h5>Exception</h5>
+        <pre>{{model.item.Message}}</pre>
+    </div>
+
+    <p>
+        You should check that all settings are in sync between servers.
+    </p>
+
+</div>
