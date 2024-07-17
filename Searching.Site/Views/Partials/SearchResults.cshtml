@@ -1,0 +1,88 @@
+﻿@model Searching.Site.Models.ViewModels.SearchViewModel
+
+@if (Model.SearchResults != null && Model.SearchResults.Any())
+{
+
+    foreach (var result in Model.SearchResults)
+    {
+        <a href="@result.Url" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">@HighlightSearchTerm(result.Name, Model.Query)</h5>
+                <small class="text-body-secondary">3 days ago</small>
+            </div>
+            <p class="mb-1">Some placeholder content in a paragraph.</p>
+            <small class="text-body-secondary">And some muted small print.</small>
+        </a>
+    }
+
+
+    @functions {
+        // Yardımcı fonksiyon: Arama terimini vurgulamak için HTML döndürür
+        public HtmlString HighlightSearchTerm(string text, string searchTerm)
+        {
+            if (string.IsNullOrEmpty(searchTerm) || string.IsNullOrEmpty(text))
+            {
+                return new HtmlString(text);
+            }
+
+            // Arama terimini vurgula
+            var highlightedText = text.Replace(searchTerm, $"<span class='highlight'>{searchTerm}</span>", StringComparison.InvariantCultureIgnoreCase);
+            return new HtmlString(highlightedText);
+        }
+    }
+
+    <!-- Sayfalama kontrolleri -->
+    @*<div id="pagination">
+            <ul class="pagination">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" href="#" onclick="loadPage(@i)">@i</a>
+                    </li>
+                }
+            </ul>
+        </div>*@
+}
+else
+{
+    <p>No results found.</p>
+}
+
+
+@*<script>
+        // Sayfa numarasına göre yeni sayfayı yükle
+        function loadPage(pageNumber) {
+            // AJAX isteği ile yeni sayfa verilerini alın
+            $.ajax({
+                url: "/Umbraco/Surface/SearchSurface/SubmitSearchForm", // API URL'nizi güncelleyin
+                type: "GET",
+                data: { query: $("#search-query").val(), pageNumber: pageNumber },
+                dataType: "json",
+                success: function (data) {
+                    // Arama sonuçlarını listele
+                    displaySearchResultsModal(data.Results);
+                },
+                error: function (xhr, status, error) {
+                    console.error(error);
+                    // Hata durumunda yapılacak işlemler (örneğin, hata mesajı göster)
+                    $("#SearchResults").html("<li>Arama sonuçları alınamadı.</li>");
+                },
+            });
+        }
+
+        // Arama sonuçlarını listeleme işlevi
+        function displaySearchResults(results) {
+            var $searchResults = $("#search-results-list");
+            $searchResults.empty();
+
+            if (results.length > 0) {
+                $.each(results, function (index, result) {
+                    $searchResults.append(
+                        "<li><a href='" + result.Url + "'>" + result.Title + "</a></li>"
+                    );
+                });
+            } else {
+                $searchResults.append("<li>Sonuç bulunamadı.</li>");
+            }
+        }
+    </script>*@

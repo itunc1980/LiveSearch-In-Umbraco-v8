@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-
 using System.Web.Http;
-using Umbraco.Web.WebApi;
 using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Web;
+using Umbraco.Web.WebApi;
 
 namespace Searching.Site.Controllers
 {
@@ -23,7 +21,7 @@ namespace Searching.Site.Controllers
             var newsItems = newsNode.Children<IPublishedContent>().Select(x => new NewsItem
             {
                 Id = x.Id,
-                PageTitle = x.Value<string>("title"),
+                PageTitle = x.Value<string>("pageTitle"),
                 PageSummary = x.Value<string>("summary"),
                 PageImage = x.Value<IPublishedContent>("image").Url(),
                 Date = x.Value<DateTime>("date")
@@ -43,9 +41,9 @@ namespace Searching.Site.Controllers
             return new NewsItem
             {
                 Id = newsItem.Id,
-                PageTitle = newsItem.Value<string>("title"),
+                PageTitle = newsItem.Value<string>("pageTitle"),
                 PageSummary = newsItem.Value<string>("summary"),
-                PageContent = newsItem.Value<string>("content"),
+                PageContent = newsItem.Value<string>("bodyText"),
                 PageImage = newsItem.Value<IPublishedContent>("image").Url(),
                 Date = newsItem.Value<DateTime>("date")
             };

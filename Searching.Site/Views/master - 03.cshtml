@@ -56,7 +56,7 @@
 
 
     <!-- Search Modal -->
-    <div class="modal fade" id="SearchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal fade" id="SearchModal" tabindex="-1" aria-labelledby="SearchModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
 
@@ -93,24 +93,6 @@
         </div>
     </div>
 
-    <!-- News Modal -->
-    <div class="modal fade" id="NewsModal" tabindex="-1" aria-labelledby="newsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="newsTitle"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                </div>
-                <img id="newsImage" src="" class="img-fluid" alt="News image" />
-                <div class="modal-body" id="newsContent">
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
 
     <script src="~/scripts/JQuery/3.7.0/jquery-3.7.0.js"></script>
@@ -121,67 +103,6 @@
     <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.13.1/jquery.validate.min.js"></script>
     <script src="https://ajax.aspnetcdn.com/ajax/mvc/5.2.3/jquery.validate.unobtrusive.min.js"></script>
 
-
-    <script>
-        $(document).ready(function () {
-            // Get the news list from the API controller
-            $.ajax({
-                url: "/Umbraco/Api/News/GetNewsList",
-                type: "GET",
-                dataType: "json",
-                success: function (data) {
-                    // Append the news items to the list element
-                    $.each(data, function (index, item) {
-
-                        const date = new Date(item.PublishDate);
-                        const formattedDate = date.toLocaleDateString("tr-TR", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                        });
-
-                        $("#news-ListGroup").append(`
-                            <a href="#" class="list-group-item list-group-item-action border my-1" data-id="${item.Id}" data-bs-toggle="modal" data-bs-target="#NewsModal">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">${item.PageTitle}</h5>
-                                    <small>${formattedDate}</small>
-                                </div>
-                                <p class="mb-1">${item.PageSummary}</p>
-                                <small>And some small print.</small>
-                            </a>
-                        `);
-
-                    });
-
-                    // Add a click event to each news title
-                    $("#news-ListGroup a").click(function (e) {
-                        e.preventDefault();
-
-                        // Get the news id from the data attribute
-                        var newsId = $(this).data("id");
-
-                        // Get the news detail from the API controller
-                        $.ajax({
-                            url: "/Umbraco/Api/News/GetNewsDetail?id=" + newsId,
-                            type: "GET",
-                            dataType: "json",
-                            success: function (data) {
-                                // Fill the modal element with the news detail
-                                $("#newsTitle").text(data.PageTitle);
-                                $("#newsImage").attr("src", data.PageImage);
-                                $("#newsContent").html(data.PageContent);
-                                $("#newsDate").text(data.PublishDate);
-
-                                // Show the modal element
-                                $("#NewsModal").show();
-                            }
-                        });
-                    });
-                }
-            });
-        });
-    </script>
 
     <script>
         $(document).ready(function () {
@@ -272,7 +193,6 @@
         //            searchTimeout = setTimeout(function () {
         //                $.ajax({
         //                    url: "/Umbraco/Api/SearchApi/GetSearchResults",
-        // Örnek: http://v8dev.dsi.gov.tr/Umbraco/Api/SearchApi/GetSearchResults?query=bakan
         //                    type: "GET",
         //                    data: { query: query },
         //                    dataType: "json",
@@ -306,6 +226,7 @@
         //        }
         //    }
         //});
+
     </script>
 
 

@@ -56,32 +56,22 @@
 
 
     <!-- Search Modal -->
-    <div class="modal fade" id="SearchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal fade" id="SearchModal" tabindex="-1" aria-labelledby="SearchModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
 
                 <div class="modal-header">
 
-                    <form class="form" id="search-form" action="@Url.Action("SubmitSearchForm", "SearchSurface")" method="post">
+                    <form class="form" id="search-form">
                         <i class="fa fa-search"></i>
-                        <input type="text" name="query" id="search-query" class="form-control form-input" placeholder="Enter your search term...">
-                        @*<button type="submit">Search</button>*@
+                        <input type="text" name="query" id="search-query" class="form-control form-input" placeholder="Search anything...">                        
                     </form>
 
                 </div>
 
                 <div class="modal-body">
-
-                    <div id="SearchResults" class="list-group">
-
-                       <!-- Burada arama sonuçlarını gösterecek olan partial view çağrılır -->
-                       @if (ViewData["SearchViewModel"] != null)
-                       {
-                            var model = ViewData["SearchViewModel"] as Searching.Site.Models.ViewModels.SearchViewModel;
-                            @Html.Partial("~/Views/Partials/SearchResults.cshtml", model)
-                       }
-
-                    </div>
+                    
+                    <ul id="SearchResults"></ul>
 
                 </div>
 
@@ -92,6 +82,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- News Modal -->
     <div class="modal fade" id="NewsModal" tabindex="-1" aria-labelledby="newsModalLabel" aria-hidden="true">
@@ -112,9 +104,9 @@
         </div>
     </div>
 
-
+    
     <script src="~/scripts/JQuery/3.7.0/jquery-3.7.0.js"></script>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/@("@")popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@("@")5.3.3/dist/js/bootstrap.min.js"></script>
 
@@ -142,15 +134,15 @@
                         });
 
                         $("#news-ListGroup").append(`
-                            <a href="#" class="list-group-item list-group-item-action border my-1" data-id="${item.Id}" data-bs-toggle="modal" data-bs-target="#NewsModal">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">${item.PageTitle}</h5>
-                                    <small>${formattedDate}</small>
-                                </div>
-                                <p class="mb-1">${item.PageSummary}</p>
-                                <small>And some small print.</small>
-                            </a>
-                        `);
+                                    <a href="#" class="list-group-item list-group-item-action border my-1" data-id="${item.Id}" data-bs-toggle="modal" data-bs-target="#NewsModal">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">${item.PageTitle}</h5>
+                                            <small>${formattedDate}</small>
+                                        </div>
+                                        <p class="mb-1">${item.PageSummary}</p>
+                                        <small>And some small print.</small>
+                                    </a>
+                                    `);
 
                     });
 
@@ -211,17 +203,20 @@
                 if (query.length >= 3) {
                     searchTimeout = setTimeout(function () {
                         $.ajax({
-                            url: "/Umbraco/Surface/SearchSurface/SubmitSearchForm", // Doğru API URL'sini buraya girin
-                            type: "POST", // Form verilerini POST olarak gönderiyoruz
-                            data: $("#search-form").serialize(), // Form verilerini serileştiriyoruz
-                            dataType: "html", // Dönen veri tipi olarak html kullanıyoruz, çünkü partial view dönecek
+                            url: "/Umbraco/Api/SearchApi/GetSearchResults", // API URL'nizi güncelleyin
+                            type: "GET",
+                            data: { query: query },
+                            dataType: "json",
                             success: function (data) {
-                                $("#SearchResults").html(data); // Başarılı olursa sonuçları container içine ekliyoruz
+                                // Arama sonuçlarını listele
+                                displaySearchResults(data.Results);
                             },
                             error: function (xhr, status, error) {
                                 console.error(error);
                                 // Hata durumunda yapılacak işlemler (örneğin, hata mesajı göster)
-                                $("#SearchResults").html("<p>Arama sonuçları alınamadı.</p>");
+                                $("#SearchResults").html(
+                                    "<li>Arama sonuçları alınamadı.</li>"
+                                );
                             },
                         });
                     }, 300); // 300 milisaniye gecikme (istekleri azaltmak için)
@@ -232,80 +227,21 @@
             });
 
             // Arama sonuçlarını listeleme işlevi
-            function displaySearchResultsModal(results) {
-                var $searchResults = $("#SearchResultsModal");
+            function displaySearchResults(results) {
+                var $searchResults = $("#SearchResults");
                 $searchResults.empty();
 
-                // results değişkeni tanımlı ve boş olmayan bir dizi mi kontrol ediyoruz
-                if (results && Array.isArray(results) && results.length > 0) {
+                if (results.length > 0) {
                     $.each(results, function (index, result) {
                         $searchResults.append(
                             "<li><a href='" + result.Url + "'>" + result.Name + "</a></li>"
                         );
                     });
-                    $("#search-results-count").text(results.length + " results found.");
                 } else {
-                    $searchResults.append("<li>No results found.</li>");
-                    $("#search-results-count").text("0 results found.");
+                    $searchResults.append("<li>Sonuç bulunamadı.</li>");
                 }
             }
         });
-    </script>
-
-
-
-
-    <!-- API ile Search Yapmak için yorum satırlarını kaldır. Yukarıyı da yorum satırına çevir. -->
-    <script>
-        //$(document).ready(function () {
-        //    var searchTimeout = null;
-
-        //    // Kullanıcı arama çubuğuna yazmaya başladığında
-        //    $("#search-query").on("input", function () {
-        //        var query = $(this).val();
-
-        //        // Önceki AJAX isteğini iptal et
-        //        clearTimeout(searchTimeout);
-
-        //        // 3 veya daha fazla karakter girildiyse arama isteği gönder
-        //        if (query.length >= 3) {
-        //            searchTimeout = setTimeout(function () {
-        //                $.ajax({
-        //                    url: "/Umbraco/Api/SearchApi/GetSearchResults",
-        // Örnek: http://v8dev.dsi.gov.tr/Umbraco/Api/SearchApi/GetSearchResults?query=bakan
-        //                    type: "GET",
-        //                    data: { query: query },
-        //                    dataType: "json",
-        //                    success: function (data) {
-        //                        displaySearchResults(data);
-        //                    },
-        //                    error: function (xhr, status, error) {
-        //                        console.error(error);
-        //                        $("#SearchResults").html("<li>Arama sonuçları alınamadı.</li>");
-        //                    }
-        //                });
-        //            }, 300); // 300 milisaniye gecikme (istekleri azaltmak için)
-        //        } else {
-        //            $("#SearchResults").empty();
-        //        }
-        //    });
-
-        //    // Arama sonuçlarını listeleme işlevi
-        //    function displaySearchResults(results) {
-        //        var $searchResults = $("#SearchResults");
-        //        $searchResults.empty();
-
-        //        if (results.length > 0) {
-        //            $.each(results, function (index, result) {
-        //                $searchResults.append(
-        //                    "<li><a href='" + result.Url + "'>" + result.Name + "</a></li>"
-        //                );
-        //            });
-        //        } else {
-        //            $searchResults.append("<li>Sonuç bulunamadı.</li>");
-        //        }
-        //    }
-        //});
     </script>
 
 

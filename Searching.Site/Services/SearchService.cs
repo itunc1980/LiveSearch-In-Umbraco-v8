@@ -1,124 +1,57 @@
 ﻿using Examine;
-using Examine.Search;
-using System;
+using Searching.Site.Models;
 using System.Collections.Generic;
 using System.Linq;
 using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Web;
-using Lucene.Net.Analysis;
-using Searching.Site.Extensions;
-using static Umbraco.Core.Constants;
 
 namespace Searching.Site.Services
 {
     public class SearchService : ISearchService
     {
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+        private readonly IUmbracoContextFactory _umbracoContextFactory;
 
-        public SearchService(IUmbracoContextAccessor umbracoContextAccessor)
+        public SearchService(IUmbracoContextFactory umbracoContextFactory)
         {
-            _umbracoContextAccessor = umbracoContextAccessor;
+            _umbracoContextFactory = umbracoContextFactory;
         }
 
-        public IEnumerable<IPublishedContent> GetPageOfContentSearchResults(string searchTerm, 
-            string category, int pageNumber, out long totalItemCount, string[] docTypeAliases, 
-            int pageSize = 10)
+        public IEnumerable<SearchResultModel> Search(string query)
         {
-            var pageOfResults = GetPageOfSearchResults(searchTerm, category, pageNumber,
-                out totalItemCount, docTypeAliases, "content");
-
-            var items = new List<IPublishedContent>();
-            if(pageOfResults != null && pageOfResults.Any())
+            using (var context = _umbracoContextFactory.EnsureUmbracoContext())
             {
-                foreach(var item in pageOfResults)
+                if (!ExamineManager.Instance.TryGetIndex("ExternalIndex", out var index))
                 {
-                    var page = _umbracoContextAccessor.UmbracoContext.Content.GetById(int.Parse(item.Id));
-                    if(page != null)
-                    {
-                        items.Add(page);
-                    }
-                }
-            }
-
-            return items;
-        }
-
-
-        public IEnumerable<ISearchResult> GetPageOfSearchResults(string searchTerm, 
-            string category, int pageNumber, out long totalItemCount, string[] docTypeAliases,
-            string searchType, int pageSize = 10)
-        {
-            int skip = pageNumber > 1 ? (pageNumber - 1) * pageSize : 0;
-
-            string[] terms = !string.IsNullOrEmpty(searchTerm) && searchTerm.Contains(" ")
-                ? searchTerm.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                : !string.IsNullOrWhiteSpace(searchTerm) ? new string[] { searchTerm } : null;
-
-            if(ExamineManager.Instance.TryGetIndex(UmbracoIndexes.ExternalIndexName, out var index))
-            {
-                if(terms != null && terms.Any())
-                {
-                    terms = terms.Where(x => !StopAnalyzer.ENGLISH_STOP_WORDS_SET.Contains(x.ToLower()) &&
-                        x.Length > 2).ToArray();
+                    return Enumerable.Empty<SearchResultModel>();
                 }
 
                 var searcher = index.GetSearcher();
-                var criteria = searcher.CreateQuery(searchType);
-                var query = criteria.GroupedNot(new string[] { "umbracoNaviHide" }, 
-                    new string[] { "1" });
+                var searchCriteria = searcher.CreateQuery("content");
+                var results = searchCriteria
+                    .GroupedOr(new[] { "nodeName", "pageTitle", "bodyText" }, query.MultipleCharacterWildcard())
+                    .Execute();
 
-                if(terms != null && terms.Any())
+                List<SearchResultModel> searchResults = new List<SearchResultModel>();
+
+                foreach (var result in results)
                 {
-                    query.And(q => q
-                    .GroupedOr(new[] { "nodeName" }, terms.Boost(12))
-                    .Or()
-                    .GroupedOr(new[] { "description" }, terms.Boost(10))
-                    .Or()
-                    .GroupedOr(new[] { "pageTitle" }, terms.Boost(8))
-                    .Or()
-                    .GroupedOr(new[] { "bodyText" }, terms.Boost(6))
-                    .Or()
-                    .GroupedOr(new[] { "seoMetaDescription" }, terms.Boost(4))
-                    .Or()
-                    .GroupedOr(new[] { "keywords" }, terms.Boost(2))
-                    .Or()
-                    .GroupedOr(new[] { "nodeName", "pageTitle", "title", "summary", "bodyText", "content", "seoMetaDescription", "keywords" }, terms.Fuzzy()), BooleanOperation.Or);
+                    var content = context.UmbracoContext.Content.GetById(int.Parse(result.Id));
+                    if (content != null)
+                    {
+                        searchResults.Add(new SearchResultModel
+                        {
+                            Id = content.Id,
+                            Name = content.Name,
+
+                            Url = content.Url(mode: UrlMode.Relative),
+
+                            Description = content.Value<string>("description")
+                        });
+                    }
                 }
 
-                if(docTypeAliases != null && docTypeAliases.Any())
-                {
-                    query.And(q => q.GroupedOr(new[] { "__NodeTypeAlias" }, docTypeAliases));
-                }
-
-                if(!string.IsNullOrWhiteSpace(category))
-                {
-                    query.And().Field("searchableCategories", category);
-                }
-
-                var allResults = query.Execute();
-
-                totalItemCount = allResults.TotalItemCount;
-
-                var pageOfResults = allResults.Skip(skip).Take(pageSize);
-
-                return pageOfResults;
+                return searchResults;
             }
-
-            totalItemCount = 0;
-            return Enumerable.Empty<ISearchResult>();
         }
-
-
-        public IEnumerable<IPublishedContent> GetContentSearchResults(string query, string[] docTypeAliases)
-        {
-            var contentService = _umbracoContextAccessor.UmbracoContext.Content;
-
-            // Sadece belirtilen doküman tiplerini sorgula
-            var results = contentService.GetByXPath("//" + string.Join(" | //", docTypeAliases) + "[contains(name(),'" + query + "')]")
-                .Where(x => x.IsVisible()); // Sadece yayında olanları al
-
-            return results;
-        }
-
     }
 }

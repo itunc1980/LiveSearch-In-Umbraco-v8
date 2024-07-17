@@ -1,17 +1,11 @@
-﻿using System.Linq;
+﻿using Searching.Site.Services;
+using System.Web.Http;
 using Umbraco.Web.WebApi;
-using Umbraco.Web;
-using Searching.Site.Services;
-using System.Web.Mvc;
 
-using System.Net.Http; // HttpResponseMessage için gerekli
-using System.Net; // HttpStatusCode için gerekli
-
-namespace Searching.Site.Controllers
+namespace Searching.Site.ApiControllers
 {
     public class SearchApiController : UmbracoApiController
     {
-        // ISearchService enjekte edin
         private readonly ISearchService _searchService;
 
         public SearchApiController(ISearchService searchService)
@@ -20,26 +14,10 @@ namespace Searching.Site.Controllers
         }
 
         [HttpGet]
-        public HttpResponseMessage GetSearchResults(string query)
+        public IHttpActionResult GetSearchResults(string query)
         {
-            // Arama işlemi
-            string[] docTypeAliases = new[] { "blogpost", "contentPage", "newsItem" };
-            var searchResults = _searchService.GetContentSearchResults(query, docTypeAliases);
-
-
-            // Sonuçları JSON formatında döndür
-            var result = new
-            {
-                Results = searchResults.Select(x => new
-                {
-                    Title = x.Value<string>("title"),
-                    Name = x.Name,
-                    Url = x.Url()
-                }),
-                TotalItemCount = searchResults.Count()
-            };
-
-            return Request.CreateResponse(HttpStatusCode.OK, result);
+            var results = _searchService.Search(query);
+            return Ok(results);
         }
     }
 }
